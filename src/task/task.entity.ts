@@ -5,6 +5,7 @@ import {
   ManyToOne,
   CreateDateColumn,
   UpdateDateColumn,
+  JoinColumn,
 } from 'typeorm';
 import { User } from '../user/user.entity';
 
@@ -21,16 +22,17 @@ export class Task {
 
   @Column({ default: false })
   done: boolean;
-  
+
   @CreateDateColumn({ type: 'timestamp' })
   created_at: Date;
 
   @UpdateDateColumn({ type: 'timestamp' })
   updated_at: Date;
 
-  @Column()
-  user_id: number;
+  @Column({ type: 'boolean', default: true })
+  active: boolean;
 
   @ManyToOne(() => User, (user) => user.tasks)
-  user: User;
+  @JoinColumn({ name: 'user' })
+  user: User; 
 }

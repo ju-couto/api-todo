@@ -3,32 +3,42 @@ import { Repository } from 'typeorm';
 import { User } from './user.entity';
 import { HttpException, HttpStatus } from '@nestjs/common';
 import * as bcrypt from 'bcrypt';
-import { CreateUserDTO, ReturnUserDTO, UpdateUserDto } from './user.dto';
+import { CreateUserDTO, UpdateUserDto } from './user.dto';
+import { ResultDto } from 'src/dto/result.dto';
+import { InjectRepository } from '@nestjs/typeorm';
 
 @Injectable()
 export class UserService {
   constructor(
-    @Inject('USER_REPOSITORY')
+    @InjectRepository(User)
     private userRepository: Repository<User>,
   ) {}
 
-  async create(data: CreateUserDTO): Promise<User> {
+  async create(data: CreateUserDTO): Promise<ResultDto> {
     const userExist = await this.findByEmail(data.email);
+    const hashedPassword = await bcrypt.hash(data.password, 10);
+    data.password = hashedPassword;
     if (userExist) {
       if (userExist.active === false) {
         await this.userRepository.update(userExist.id, { active: true });
         await this.userRepository.update(userExist.id, data);
-
-        return await this.userRepository.findOne({ where: { id: userExist.id } });
+        await this.userRepository.findOne({
+          where: { id: userExist.id },
+        });
+        return {
+          message: 'User reactivated',
+          status: HttpStatus.OK,
+        };
       } else {
         throw new HttpException('User already exists', HttpStatus.CONFLICT);
       }
-    } 
-
-    const hashedPassword = await bcrypt.hash(data.password, 10);
-    data.password = hashedPassword;
-
-    return await this.userRepository.save(data);
+    }
+    const user = await this.userRepository.create(data);
+    await this.userRepository.save(user);
+    return {
+      message: 'User created',
+      status: HttpStatus.CREATED,
+    };
   }
 
   async findOne(id: number): Promise<User> {
@@ -45,7 +55,7 @@ export class UserService {
     return await this.userRepository.findOne({ where: { email } });
   }
 
-  async update(id: number, data: UpdateUserDto): Promise<ReturnUserDTO> {
+  async update(id: number, data: UpdateUserDto): Promise<ResultDto> {
     const userExist = await this.findByEmail(data.email);
     if (userExist && userExist.id !== id) {
       throw new HttpException('This email already exists', HttpStatus.CONFLICT);
@@ -54,12 +64,26 @@ export class UserService {
     }
 
     await this.userRepository.update(id, data);
-    const userUpdated = await this.userRepository.findOne({ where: { id } });
+    await this.userRepository.findOne({ where: { id } });
 
-    return new ReturnUserDTO(userUpdated);
+    return {
+      message: 'User updated',
+      status: HttpStatus.OK
+  }
+}
+
+  async isActivated(user: number): Promise<boolean> {
+    const userId = user
+    const userExist = await this.userRepository.findOne({
+      where: { id: userId, active: true },
+    });
+    if (!userExist) {
+      return false;
+    }
+    return true;
   }
 
-  async delete(id: number): Promise<Object> {
+  async delete(id: number): Promise<ResultDto> {
     const user = await this.userRepository.findOne({
       where: { id, active: true },
     });

@@ -4,7 +4,7 @@ import {
   HttpStatus,
   createParamDecorator,
 } from '@nestjs/common';
-import { authorizationToLoginPayload } from 'src/utils/base-64-converter';
+import { authorizationToLoginPayload } from '../utils/base-64-converter';
 import { verify } from 'jsonwebtoken';
 
 export const User = createParamDecorator((_, context: ExecutionContext) => {

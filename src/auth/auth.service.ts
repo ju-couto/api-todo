@@ -12,8 +12,9 @@ export class AuthService {
     private jwtService: JwtService,
   ) {}
   async login(data: LoginUserDto) {
-    const user = await this.usersService
-      .findByEmail(data.email).catch(() => {undefined})
+    const user = await this.usersService.findByEmail(data.email).catch(() => {
+      undefined;
+    });
 
     if (!user || user.active === false) {
       throw new HttpException('Invalid credentials', HttpStatus.UNAUTHORIZED);

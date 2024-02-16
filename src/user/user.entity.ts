@@ -1,4 +1,4 @@
-import { Task } from 'src/modules/task/task.entity';
+import { Task } from '../task/task.entity';
 import {
   Entity,
   Column,
@@ -31,5 +31,5 @@ export class User {
   active: boolean;
 
   @OneToMany(() => Task, task => task.user)
-  tasks: Task[];
+  tasks?: Task[];
 }
