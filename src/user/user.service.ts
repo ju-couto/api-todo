@@ -20,14 +20,14 @@ export class UserService {
     data.password = hashedPassword;
     if (userExist) {
       if (userExist.active === false) {
-        await this.userRepository.update(userExist.id, { active: true });
-        await this.userRepository.update(userExist.id, data);
-        await this.userRepository.findOne({
-          where: { id: userExist.id },
+        await this.userRepository.update(userExist.id, {
+          ...data,
+          active: true,
         });
+
         return {
+          statusCode: HttpStatus.OK,
           message: 'User reactivated',
-          status: HttpStatus.OK,
         };
       } else {
         throw new HttpException('User already exists', HttpStatus.CONFLICT);
@@ -36,8 +36,8 @@ export class UserService {
     const user = await this.userRepository.create(data);
     await this.userRepository.save(user);
     return {
-      message: 'User created',
-      status: HttpStatus.CREATED,
+      statusCode: HttpStatus.CREATED,
+      message: 'User created'
     };
   }
 
@@ -56,44 +56,26 @@ export class UserService {
   }
 
   async update(id: number, data: UpdateUserDto): Promise<ResultDto> {
-    const userExist = await this.findByEmail(data.email);
+    const userExist = await this.findOne(id);
     if (userExist && userExist.id !== id) {
       throw new HttpException('This email already exists', HttpStatus.CONFLICT);
-    } else if (!userExist) {
-      throw new HttpException('User not found', HttpStatus.NOT_FOUND);
-    }
+    } 
 
     await this.userRepository.update(id, data);
-    await this.userRepository.findOne({ where: { id } });
+
 
     return {
-      message: 'User updated',
-      status: HttpStatus.OK
-  }
-}
-
-  async isActivated(user: number): Promise<boolean> {
-    const userId = user
-    const userExist = await this.userRepository.findOne({
-      where: { id: userId, active: true },
-    });
-    if (!userExist) {
-      return false;
-    }
-    return true;
+      statusCode: HttpStatus.OK,
+      message: 'User updated'
+    };
   }
 
   async delete(id: number): Promise<ResultDto> {
-    const user = await this.userRepository.findOne({
-      where: { id, active: true },
-    });
-    if (!user) {
-      throw new HttpException('User not found', HttpStatus.NOT_FOUND);
-    }
+    await this.findOne(id);
     await this.userRepository.update(id, { active: false });
     return {
-      message: 'User deleted',
-      status: HttpStatus.OK,
+      statusCode: HttpStatus.OK,
+      message: 'User deleted'
     };
   }
 }

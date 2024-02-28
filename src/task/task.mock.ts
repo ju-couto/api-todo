@@ -1,16 +1,27 @@
+import { Task } from "./task.entity";
+
 export const createTaskMock = {
     title: 'Task 1',
     description: 'Description of task 1',
 }
 
-export const taskMock = {
+export const taskMock: Task = {
     id: 1,
     title: 'Task 1',
     description: 'Description of task 1',
     done: false,
     created_at: new Date(),
     updated_at: new Date(),
-    active: true
+    active: true,
+    user: {
+        id: 1,
+        name: 'Test User',
+        email: 'tes.@test.com',
+        password: 'password',
+        created_at: new Date(),
+        updated_at: new Date(),
+        active: true
+    }
 }
 
 export const tasksMock = [
@@ -44,12 +55,3 @@ export const updateTaskMock = {
     description: 'Description of task 1',
     done: true
 }
-export const userMock = {
-    id: 1,
-    name: 'Test User',
-    email: 'test.@test.com',
-    password: 'password',
-    created_at: new Date(),
-    updated_at: new Date(),
-    active: true
-  };

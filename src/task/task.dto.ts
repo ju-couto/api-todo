@@ -1,7 +1,11 @@
+import { IsNotEmpty } from 'class-validator';
 import { Task } from './task.entity';
 
 export class CreateTaskDTO {
+  @IsNotEmpty()
   title: string;
+
+  @IsNotEmpty()
   description: string;
 }
 

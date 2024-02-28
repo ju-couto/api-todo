@@ -14,28 +14,20 @@ export class TaskService {
     private userService: UserService,
   ) {}
 
-  async create(data: CreateTaskDTO, user_id: number): Promise<ResultDto> {
-    const user = await this.userService.isActivated(user_id);
-    if (!user) {
-      throw new HttpException('User not found', HttpStatus.NOT_FOUND);
-    }
-    const task = await this.taskRepository.save({
+  async create(data: CreateTaskDTO, user_id: number): Promise<Task> {
+    await this.userService.findOne(user_id);
+
+    const task = await this.taskRepository.create({
       ...data,
       user: { id: user_id },
     });
 
-    return {
-      message: 'Task created',
-      status: HttpStatus.CREATED,
-    };
+    return  await this.taskRepository.save(task)
     
   }
 
   async findAllByUser(user_id: number): Promise<ReturnTaskDTO[]> {
-    const user = await this.userService.isActivated(user_id);
-    if (!user) {
-      throw new HttpException('User not found', HttpStatus.NOT_FOUND);
-    }
+    await this.userService.findOne(user_id);
     const tasks = await this.taskRepository.find({
       where: { user: { id: user_id }, active: true },
     });
@@ -46,43 +38,39 @@ export class TaskService {
     id: number,
     data: UpdateTaskDto,
     user_id: number,
-  ): Promise<ReturnTaskDTO> {
-    const taskExist = await this.taskRepository.findOne({
-      where: { id, active: true },
-      relations: ['user'],
-    });
-    if (!taskExist || taskExist.user.id !== user_id) {
-      throw new HttpException('Task not found', HttpStatus.NOT_FOUND);
-    }
+  ): Promise<ResultDto> {
+    await this.findOne(id, user_id);
 
-    const user = await this.userService.isActivated(user_id);
-    if (!user) {
-      throw new HttpException('User not found', HttpStatus.NOT_FOUND);
-    }
+    await this.userService.findOne(user_id);
+  
     await this.taskRepository.update(id, data);
-    const task = await this.taskRepository.findOne({ where: { id } });
 
-    return new ReturnTaskDTO(task);
-  }
+    return {
+      statusCode: HttpStatus.OK,
+      message: 'Task updated'
+    };
+    }
 
-  async delete(id: number, user_id: number): Promise<Object> {
-    const taskExist = await this.taskRepository.findOne({
+  async findOne(id: number, user_id: number): Promise<Task> {
+    const task = await this.taskRepository.findOne({
       where: { id, active: true },
       relations: ['user'],
     });
-    if (!taskExist || taskExist.user.id !== user_id) {
+    if (!task || task.user.id !== user_id) {
       throw new HttpException('Task not found', HttpStatus.NOT_FOUND);
     }
+    return task;
+  }
+  async delete(id: number, user_id: number): Promise<ResultDto> {
+    await this.findOne(id, user_id);
 
-    const user = await this.userService.isActivated(user_id);
-    if (!user) {
-      throw new HttpException('User not found', HttpStatus.NOT_FOUND);
-    }
+    await this.userService.findOne(user_id);
+  
     await this.taskRepository.update(id, { active: false });
 
     return {
-      message: 'Task deleted',
-      status: HttpStatus.OK,
+      statusCode: HttpStatus.OK,
+      message: 'Task deleted'
     };
   }
 }
